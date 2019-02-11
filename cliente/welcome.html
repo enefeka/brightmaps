@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Users</title>
+	<meta charset="utf-8">
+
+	<!-- BOOTSTRAP -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<!-- Archivo js de configuración -->
+	<script type="text/javascript" src="config.js"></script>
+
+	<link rel="stylesheet" href="spinnerstyle.css">
+
+	<script type="text/javascript">
+
+		if(sessionStorage.getItem('token') != null){
+			var token = sessionStorage.getItem('token');
+		}else{
+			window.location.href="login.html";
+		}
+	
+	$(document).ready(function(){ 
+		$("#result").hide();
+		
+		mostrarUsuarios();
+
+                        
+		$("#submit").on("click",function(e){
+
+			var email = $("#email").val();
+            var name  = $("#name").val();
+            var id_rol  = $("#selectRol").val();
+	        e.preventDefault();
+            
+			$.ajax({
+			    url: "http://localhost:8888/brightmaps/public/api/insertuser",
+			    type: "POST",
+			    data: {
+			    	'email' : email,
+                    'name' : name,
+                    'id_rol' : id_rol,
+			    },
+			    headers: { 'Authorization': token },
+			    dataType: 'json',
+			    success:function(response){
+                    
+			    	if(response.code == 200){
+			    		$("#result").removeClass("alert-danger");
+			    		$("#result").addClass("alert-success");
+			    		$("#listaUsuarios").html("");
+
+			    		$("#formInsertUser")[0].reset();
+
+			    		mostrarUsuarios();
+                        
+			    	}else{
+			    		$("#result").removeClass("alert-success");
+			    		$("#result").addClass("alert-danger");
+			    	}
+
+			    	$("#result").html(response.message);
+			    	$("#result").show();
+
+			    }
+			    	
+			});
+		});
+        
+        $('#busqueda').on('input', function() {
+    		console.log($("#busqueda").val() );
+
+    		if($("#busqueda").val() == ""){
+                mostrarUsuarios();
+            }else{
+	            $.ajax({
+				    url: "http://localhost:8888/brightmaps/public/api/finduser",
+				    type: "GET",
+	                data: {
+				    	'name' : $("#busqueda").val() 
+				    },
+	                
+				    headers: { 'Authorization': token },
+				    dataType: 'json',
+				    success:function(response){
+
+	                    $("#tableBody").html("");
+
+				    	if($("#tableBody").html() == ""){
+
+							$.each(response.data, function(i, user) {
+	                            
+
+	                            
+					
+
+
+	                            var select = "<span><select id='" + user.id + "'><option value='1'>admin</option><option value='2' selected>profesores</option><option value='3'>alumnos</option></select></span>";
+
+	                            var imgRegistered = user.is_registered == 1 ? "<img width='30' src='img/success.png'/>" : "<img width='30' src='img/error.png'/>";
+	                            
+					    		$("#tableBody").append("<tr><th class='text-left' scope='row'>"+ user.email +"</th><td class='text-center'>"+ imgRegistered +"</td><td class='text-center'>" + "</td><td class='text-center'><input type='button' class='btn btn-outline-info' name='edit' id='edit' onclick='goToEditUser(" + user.id + ")' value='Cambiar'></td class='text-center'><td><input type='button' name='delet' id='delet' onclick='deletUser(" + user.id + ")' class='btn btn-outline-danger' value='Borrar'></td></tr>");
+							});
+
+						}
+					}
+
+				}); 
+
+			}  
+
+		});
+        
+        
+	});
+
+
+	function mostrarUsuarios(){
+
+		$.ajax({
+			    url: "http://localhost:8888/brightmaps/public/api/listusers",
+			    type: "GET",
+			    headers: { 'Authorization': token },
+			    dataType: 'json',
+			    success:function(response){
+                    
+                    var id_rol  = $("#selectMyRol").val();
+                    
+                    $("#tableBody").html("");
+
+			    	if($("#tableBody").html() == ""){
+
+						$.each(response.data, function(i, user) {
+                            
+                            var admin = "<span class='badge badge-primary'>Admin</span>";
+                            var usuarios = "<span class='badge badge-success'>Usuario</span>";
+                            
+                            var admin = "";
+                            
+                            switch(user.role_id){
+                                case "1":
+                                    admin = activado;
+                                    break;
+                                    
+                                case "2":
+                                    admin = desactivado;
+                                    break;
+                                    
+                            }
+							
+                            var selected = user.role_id;
+                            var select = "<span><select id='" + user.id + "'><option value='1'>admin</option><option value='2' selected>usuarios</option></select></span>"; 
+
+				    		var imgRegistered = user.role_id == 1 ? "<img width='30' src='img/success.png'/>" : "<img width='30' src='img/error.png'/>";
+
+				    		$("#tableBody").append("<tr><th class='text-left' scope='row'>"+ user.email +"</th><td class='text-center'>"+ imgRegistered +"</td><td class='text-center'>"+ status +"</td><td class='text-center'><input type='button' class='btn btn-outline-info' name='edit' id='edit' onclick='goToEditUser(" + user.id + ")' value='Cambiar'></td class='text-center'><td><input type='button' name='delet' id='delet' onclick='deletUser(" + user.id + ")' class='btn btn-outline-danger' value='Borrar'></td></tr>");
+
+				    		$(".sk-circle").hide();
+                        
+						});
+
+					}
+
+			    }
+			});
+
+	}
+	   
+        
+    function deletUser(id){
+
+    	var alert = confirm("¿Seguro que quieres eliminar el usuario?");
+	    if (alert == true) {
+
+			$.ajax({
+			    url: "http://localhost:8888/brightmaps/public/api/deleteuser",
+			    type: "POST",
+			    data: {
+			    	'id' : id,
+			    },
+			    headers: { 'Authorization': token },
+			    dataType: 'json',
+			    success:function(response){
+
+			    	if(response.code == 200){
+			    		mostrarUsuarios();
+
+			    	}else{
+			    		$("#result").addClass("alert-danger");
+			    	}
+
+			    	$("#result").html(response.message);
+			    	$("#result").show();
+
+			    }
+			    	
+			});
+
+	    }
+            
+    }
+        
+    function goToEditUser(id){
+    	sessionStorage.setItem('idUser', id);
+    	window.location.href = "editUser.html";
+        
+    }
+
+
+    function salir(){
+		sessionStorage.clear();
+		window.location.href = "login.html";
+	}
+    
+    
+	</script>
+
+</head>
+<body>
+	<div class="main container">
+
+		<div class="col-12 row mt-3">
+		    <ol class="breadcrumb col-10">
+		        <li class="breadcrumb-item active" aria-current="page">Usuarios</li>
+
+		        
+		    </ol>
+		    <div class="col-2">
+		        <button type="button" class="btn navbar-btn btn-outline-danger" onclick="salir()">Salir / Cerrar sesión</button>
+		    </div>
+		</div>
+		<h1 class="col-12">Usuarios</h1>
+
+		<hr>
+
+		<h3 class="col-12">Registrar Nuevo Usuario</h3>
+
+		<form class="form-inline" id="formInsertUser">
+			<!-- Email -->
+			<div class="input-group  col-md-3">
+
+				<div class="input-group-prepend">
+					<span class="input-group-text" id="basic-addon1"><img width="20" src="img/email.png"/></span>
+				</div>
+
+				<input size="30" type="text" name="email" class="form-control" id="email" placeholder="Email" aria-label="Email" aria-describedby="basic-addon1">
+			</div>
+
+			<!-- Name -->
+			<div class="input-group  col-md-3">
+
+				<div class="input-group-prepend">
+					<span class="input-group-text" id="basic-addon1"><img width="20" src="img/name.png"/></span>
+				</div>
+
+				<input size="30" type="text" name="name" class="form-control" id="name" placeholder="Name" aria-label="Name" aria-describedby="basic-addon1">
+			</div>
+
+			<!-- Rol -->
+			<div class="input-group  col-md-3">
+				<select class="custom-select" id="selectRol">
+					<option selected>Elegir rol...</option>
+					<option value="1">Admin</option>
+					<option value="2">Usuario</option>
+				</select>
+
+				<div class="input-group-append">
+					<label class="input-group-text" for="inputGroupSelect02">Roles</label>
+				</div>
+			</div>
+
+
+			<div class="input-group mt-3 text-center col-md-2">
+				<input type="submit" class="btn btn-outline-dark" name="submit" value="Registrar" id="submit">
+			</div>
+
+			<div class="input-group mt-4 text-center col-md-10">
+				<p id="result" class="alert alert-success" style="display:none"></p>
+			</div>
+
+
+		</form>
+
+		<hr>
+
+        <br>
+
+        <h3 class="col-5" style="margin:0; float:left">Lista de usuarios</h3>
+
+        <nav class="input-group mb-3 col-md-7">
+
+			<div class="input-group-prepend">
+				<span class="input-group-text" id="basic-addon1"><img width="20" src="img/search.png"/></span>
+			</div>
+
+			<input size="30" type="text" name="busqueda" class="form-control" id="busqueda" placeholder="Buscar usuario" aria-label="Username" aria-describedby="basic-addon1" onchange='search(this)'>
+		</nav>
+
+		<table class="table">
+			<thead class="thead-dark">
+				<tr>
+					<th class="text-center" scope="col">E-mail</th>
+					<th class="text-center" scope="col">Admin</th>
+					<th class="text-center" scope="col"></th>
+					<th class="text-center" scope="col"></th>
+					<th class="text-center" scope="col"></th>
+				</tr>
+			</thead>
+			<tbody id="tableBody">
+
+				
+			</tbody>
+		</table>
+
+		<div class="sk-circle">
+			<div class="sk-circle1 sk-child"></div>
+			<div class="sk-circle2 sk-child"></div>
+			<div class="sk-circle3 sk-child"></div>
+			<div class="sk-circle4 sk-child"></div>
+			<div class="sk-circle5 sk-child"></div>
+			<div class="sk-circle6 sk-child"></div>
+			<div class="sk-circle7 sk-child"></div>
+			<div class="sk-circle8 sk-child"></div>
+			<div class="sk-circle9 sk-child"></div>
+			<div class="sk-circle10 sk-child"></div>
+			<div class="sk-circle11 sk-child"></div>
+			<div class="sk-circle12 sk-child"></div>
+		</div>
+        
+        <br>
+        <br>
+		<br>
+		<br>
+
+	</div>
+
+</body>
+</html>

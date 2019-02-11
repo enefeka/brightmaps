@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>EDITAR USUARIO| Cliente BrightMaps</title>
+
+	<meta charset="utf-8">
+
+	<!-- BOOTSTRAP -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
+
+	<!-- Archivo js de configuración -->
+	<script type="text/javascript" src="config.js"></script>
+
+	<script>
+
+	if(sessionStorage.getItem('token') != null || sessionStorage.getItem('idUser') != null){
+		var token = sessionStorage.getItem('token');
+		var idUser = sessionStorage.getItem('idUser');
+	}else{
+		window.location.href="login.html";
+	}
+
+	$("#result").hide();
+
+	$(document).ready(function() {
+
+		
+
+		$.ajax({
+		    url: "http://localhost:8888/brightmaps/public/api/userbyid",
+		    type: "GET",
+		    headers: { 'Authorization': token },
+		    data: {
+		    	'id': idUser
+		    },
+		    dataType: 'json',
+		    success:function(response){
+
+
+		    	var selectRol = "<div class='input-group text-center col-md-12'><select class='custom-select' id='selectRol'><option selected>Elegir rol...</option><option value='1'>Admin</option><option value='2'>Usuario</option></select><div class='input-group-append'><label class='input-group-text' for='inputGroupSelect02'>Roles</label></div></div>";
+
+                $("#tableBody").append("<tr><th class='text-center' scope='row'>Email</th><td class='text-center'>"+ response.data.email +"</td></tr>");
+                $("#tableBody").append("<tr><th class='text-center' scope='row'>Nombre</th><td class='text-center'>"+ response.data.name +"</td></tr>");
+                $("#tableBody").append("<tr><th class='text-center' scope='row'>Rol</th><td class='text-center'>"+ selectRol +"</td></tr>");
+
+                $("#selectRol").val(response.data.role_id);
+
+
+            }    
+        });
+
+        $("#edit").click(function() {
+	  		var idRol = $("#selectRol").val();
+     		var email = $('#email').val();
+     		var name = $('#name').val();
+     		var password = $('#password').val();
+
+	  		if(idRol != "1" && idRol != "2"){
+	  			$("#resultError").show();
+				$("#resultError").html("Es necesario que selecciones un rol para el usuario.");
+	  		}else{
+	  			var alert = confirm("¿Quieres confirmar los cambios?");
+			    if (alert == true) {
+
+			        $.ajax({
+					    url: "http://localhost:8888/brightmaps/public/api/updateuser",
+					    type: "POST",
+					    data: {
+					    	'id': idUser,
+					    	'role_id': idRol,
+					    	'name': name,
+					    	'email': email,
+					    	'password': password,
+					    },
+					    headers: { 'Authorization': token },
+					    dataType: 'json',
+					    success:function(response){
+
+					        if (response.code == 400) {
+					        	var error = confirm(response.message);
+              					$("#result").show();
+             				    $("#result").html(response.message);
+
+            }
+					    	if(response.code == 200){
+					    		backToUsers();
+					    	}else{
+			    		$("#result").removeClass("alert-success");
+			    		$("#result").addClass("alert-danger");
+			    	}
+
+			    	$("#result").html(response.message);
+			    	$("#result").show();
+
+
+			            }    
+		        	});
+		    	}
+	  		}
+			
+			
+
+		});
+    	
+	});
+
+
+	
+
+	function backToUsers(){
+		window.location.href = "welcome.html";
+	}
+
+	</script>
+
+</head>
+<body>
+
+	<div class="container text-center">
+
+		<br>
+
+		<h1>Modificar usuario</h1>
+
+		<div class="container">
+
+			<div class="text-center">
+				<h4>Editar la información de un usuario de la aplicación</h4>
+			</div>
+			
+		</div>
+
+		<div class="m-3" style="float:left">
+			<button class="btn btn-outline-secondary" onclick="backToUsers()">Volver a usuarios</button>
+		</div>
+
+		<hr>
+
+		<table class="table">
+			<thead class="thead-dark">
+			<tr>
+					<th class="text-left" scope="col">Editar usuario</th>
+					<th class="text-center" scope="col"></th>
+					<th class="text-center" scope="col"></th>
+					<th class="text-center" scope="col"></th>
+					<th class="text-center" scope="col"></th>
+				</tr>
+			</thead>
+			<tbody id="tableBody">
+				
+			</tbody>
+		</table>
+
+
+        
+		
+
+	</div>
+
+<br>
+	<form class="form-inline" id="formInsertUser">
+			<!-- Email -->
+			<div class="input-group  col-md-3">
+
+				<div class="input-group-prepend">
+					<span class="input-group-text" id="basic-addon1"><img width="20" src="img/email.png"/></span>
+				</div>
+
+				<input size="30" type="text" name="email" class="form-control" id="email" placeholder="Email" aria-label="Email" aria-describedby="basic-addon1">
+			</div>
+
+			<!-- Name -->
+			<div class="input-group  col-md-3">
+
+				<div class="input-group-prepend">
+					<span class="input-group-text" id="basic-addon1"><img width="20" src="img/name.png"/></span>
+				</div>
+
+				<input size="30" type="text" name="name" class="form-control" id="name" placeholder="Name" aria-label="Name" aria-describedby="basic-addon1">
+			</div>
+			<!-- Password -->
+			<div class="input-group  col-md-3">
+
+				<div class="input-group-prepend">
+					<span class="input-group-text" id="basic-addon1"><img width="20" src="img/key.png"/></span>
+				</div>
+
+				<input size="30" type="password" name="password" class="form-control" id="password" placeholder="Password" aria-label="Name" aria-describedby="basic-addon1">
+			</div>
+
+
+	</form>	
+
+
+</form>
+	
+
+	<br>
+		<p id="resultError" class="alert alert-danger" style="display:none"></p>
+		<p id="resultSuccess" class="alert alert-success" style="display:none"></p>
+
+		<button class="btn btn-outline-primary mb-5" id="edit">Guardar cambios</button>
+
+</body>
+</html>
