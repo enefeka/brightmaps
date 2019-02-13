@@ -199,7 +199,7 @@ class UserController extends Controller
                 $message->from('proyectogpass@gmail.com', 'Recuperación contraseña');
                 $message->to($emailRecipient)->subject('Recuperación contraseña');
             });
-            return $this->createResponse(200, "Contraseña Enviada");
+            return $this->createResponse(200, "Contraseña Enviada", $email);
 
 
         }

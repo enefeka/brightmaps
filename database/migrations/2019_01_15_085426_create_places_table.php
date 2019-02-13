@@ -19,6 +19,7 @@ class CreatePlacesTable extends Migration
             $table->integer('x_coordinate');
             $table->integer('y_coordinate');
             $table->integer('user_id');
+            $table->string('description');
             $table->timestamp('initial_date');
             $table->timestamp('end_date')->useCurrent();
             $table->timestamps();

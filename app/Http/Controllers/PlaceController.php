@@ -42,6 +42,7 @@ class PlaceController extends Controller
         $yCoord = $_POST['yCoordinate'];
         $initialDate = $_POST['initialDate'];
         $endDate = $_POST['endDate'];
+        $description = $_POST['description'];
         $id = User::where('email', $userData->email)->first()->id;
         $places = Place::where('user_id', $id)->get();
         foreach ($places as $place) 
@@ -59,6 +60,10 @@ class PlaceController extends Controller
         if (empty($placeName)) {
             return $this->createResponse(400, 'Tienes que introducir un nombre para el lugar');
         } 
+
+        if (empty($description)) {
+            return $this->createResponse(400, 'Tienes que introducir una descripción para el lugar');
+        }
         if (empty($initialDate) || empty($endDate)) {
             return $this->createResponse(400, 'Tienes que introducir ambas fechas');
         } 
@@ -75,9 +80,10 @@ class PlaceController extends Controller
             $place->initial_date = $initialDate;
             $place->end_date = $endDate;
             $place->user_id = $id;
+            $place->description = $description;
             $place->save();
 
-            return $this->createResponse(200,'Lugar creado', $request->placeName);
+            return $this->createResponse(200,'Lugar creado', $place);
 
         }
         else
@@ -118,6 +124,7 @@ class PlaceController extends Controller
         $newY = $_POST['newYCoord'];
         $newInitial = $_POST['newInitial'];
         $newEnd = $_POST['newEnd'];
+        $newDesc = $_POST['newDescription'];
         $id = $id_place;
         $place = Place::find($id);
         if (is_null($place)) {
@@ -130,9 +137,13 @@ class PlaceController extends Controller
         if (empty($newInitial) || empty($newEnd)) {
             return $this->createResponse(400, 'Tienes que introducir ambas fechas');
         } 
+        if (empty($newDesc)) {
+            return $this->createResponse(400, 'Tienes que introducir una descripción para el lugar');
+        }
 
-
-
+        if (!empty($_POST['newDescription'])) {
+            $place->description = $newDesc;
+        }
         if (!empty($_POST['newName']) ) {
             $place->name = $newName;
         }
@@ -152,6 +163,30 @@ class PlaceController extends Controller
         return $this->createResponse(200, 'Lugar Actualizado', $place);
         
 
+    }
+
+    public function get_place()
+    {
+        $headers = getallheaders();
+        $token = $headers['Authorization'];
+        $key = $this->key;
+        if (!isset($_GET['id'])) {
+             return $this->createResponse(400, 'el Parametro id es obligatorio');
+        }
+        $id = $_GET['id'];
+        try {
+            $place = Place::find($id);
+            if ($place == null) {
+                return $this->createResponse(400, 'No existe el evento');
+
+            }
+
+        return $this->createResponse(200, 'Datos del lugar', $place);
+            
+        } catch (Exception $e) {
+            
+            return $this->crateResponse(500, $e->getMessage());
+        }
     }
 
 }
