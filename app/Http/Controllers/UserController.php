@@ -59,7 +59,7 @@ class UserController extends Controller
             {
                 $users = new User();
                 $users->name = $name;
-                $users->password = encrypt($password);
+                $users->password = $password;
                 $users->email = $email;
                 $users->status = 1;
                 $users->role_id = 2;
@@ -118,7 +118,7 @@ class UserController extends Controller
             $newUser = new User();
             $newUser->email = $email;
             $newUser->role_id = $role_id;
-            $newUser->password = encrypt("temporal");
+            $newUser->password = "temporal";
             $newUser->name = $name;
             $newUser->status = 1;
 
@@ -152,14 +152,18 @@ class UserController extends Controller
         }
 
 
-        $userDecrypt = User::where('email', $email)->first();
-        $passwordHold = $userDecrypt->password;
+
         $key = $this->key;
+
+        $users = User::where('email', $email)->get();
+        if ($users->isEmpty()) { 
+            return $this->createResponse(400, "Ese usuario no existe");
+        }
+
         if (self::checkLogin($email, $password))
         {
-            $decryptedPassword = decrypt($passwordHold);
-            $userSave = User::where('email', $email)->first();
 
+        $userSave = User::where('email', $email)->first();
 
             $array = $arrayName = array
             (
@@ -190,9 +194,8 @@ class UserController extends Controller
             $userRecover = User::where('email', $email)->first();
             $id = $userRecover->id;
             $pwdDB = User::where('email', $userRecover->email)->first()->password;
-            $pwdDecrypted = decrypt($pwdDB);
             $dataEmail = array(
-                'pwd' => $pwdDecrypted,
+                'pwd' => $pwdDB,
             );
             Mail::send('emails.welcome', $dataEmail, function($message){
                 $emailRecipient = $_POST['email'];
@@ -243,7 +246,7 @@ class UserController extends Controller
                 $userBD->status = $_POST['status'];
             }
             if (!empty($_POST['password']) ) {
-                $userBD->password = encrypt($_POST['password']);
+                $userBD->password = $_POST['password'];
             }
 
             if (!empty($_POST['role_id']) ) {

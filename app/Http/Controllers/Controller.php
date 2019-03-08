@@ -47,9 +47,8 @@ class Controller extends BaseController
         $userSave = User::where('email', $email)->first();
         $emailSave = $userSave->email;
         $passwordSave = $userSave->password;
-        $decryptedSave = decrypt($passwordSave);
 
-        if($emailSave == $email && $decryptedSave == $password)
+        if($emailSave == $email && $passwordSave == $password)
         {
             return true;
         }

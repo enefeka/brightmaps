@@ -15,6 +15,9 @@ class PlaceController extends Controller
 
         $headers = getallheaders();
         $token = $headers['Authorization'];
+        if (empty($token)) {
+            return $this->createResponse(400, "No estás conectado");
+        }
         $key = $this->key;
         $userData = JWT::decode($token, $key, array('HS256'));
         $id = User::where('email', $userData->email)->first()->id;
@@ -35,6 +38,9 @@ class PlaceController extends Controller
      {   
         $headers = getallheaders();
         $token = $headers['Authorization'];
+        if (empty($token)) {
+            return $this->createResponse(400, "No estás conectado");
+        }
         $key = $this->key;
         $userData = JWT::decode($token, $key, array('HS256'));
         $placeName = $_POST['placeName'];
@@ -96,12 +102,22 @@ class PlaceController extends Controller
     {
         $headers = getallheaders();
         $token = $headers['Authorization'];
+        if (empty($token)) {
+            return $this->createResponse(400, "No estás conectado");
+        }
         $key = $this->key;
         $userData = JWT::decode($token, $key, array('HS256'));
         $id_user = User::where('email', $userData->email)->first()->id;
         $id_place = $_POST['idPlace'];
         $id = $id_place;
         $place = Place::find($id);
+        if ($userData->rol != 1 && $userData->id != $place->user_id) {
+            return $this->createResponse(401, 'No tienes permiso');
+        }
+        if (empty($id_place)) {
+            return $this->createResponse(400, 'Indica la id del lugar');
+        }
+
         if (is_null($place)) {
             return $this->createResponse(400, 'El lugar no existe');
         }else{
@@ -116,6 +132,9 @@ class PlaceController extends Controller
     {
         $headers = getallheaders();
         $token = $headers['Authorization'];
+        if (empty($token)) {
+            return $this->createResponse(400, "No estás conectado");
+        }
         $key = $this->key;
         $userData = JWT::decode($token, $key, array('HS256'));
         $id_place = $_POST['idPlace'];
@@ -127,6 +146,9 @@ class PlaceController extends Controller
         $newDesc = $_POST['newDescription'];
         $id = $id_place;
         $place = Place::find($id);
+        if ($userData->rol != 1 && $userData->id != $place->user_id) {
+            return $this->createResponse(401, 'No tienes permiso');
+        }
         if (is_null($place)) {
             return $this->createResponse(400, 'El lugar no existe');
         }
